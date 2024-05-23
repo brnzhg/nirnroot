@@ -1,0 +1,11 @@
+name: nirnrootenv
+channels:
+- conda-forge
+dependencies:
+- python
+- pip
+- numpy
+- tensorflow
+- pip:
+  - pynput
+  - keyboard
