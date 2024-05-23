@@ -23,9 +23,10 @@ def build_data(data_dir: pathlib.Path, filenames: List[str]):
 input_filenames: List[str] = \
     ['raw_mouse_events_70Alchs_Focused_cleaned.csv',
      'raw_mouse_events_70Alchs_Focused2_cleaned.csv',
-     'raw_mouse_events_70Alchs_Focused3_cleaned.csv'
+     'raw_mouse_events_70Alchs_Focused3_cleaned.csv',
+    'raw_mouse_events_cleaned.csv'
     ]
-output_filename: str = 'learned_events_70Alchs_focused_standard.csv'
+output_filename: str = 'my_minmax.csv'
 
 data_dir: pathlib.Path = pathlib.Path.cwd() / 'tempdata'
 output_filepath: pathlib.Path = data_dir / 'generated' / output_filename
@@ -34,17 +35,21 @@ data = build_data(data_dir, input_filenames)
 print(data[:5])
 
 # Normalize the data
-scaler = RobustScaler()
+scaler = MinMaxScaler()
 data_normalized = scaler.fit_transform(data)
 
-#=====================
-# Define the autoencoder
+# Check the shape and first few rows of the normalized data
+print("Normalized data shape:", data_normalized.shape)
+print("First few rows of normalized data:\n", data_normalized[:5])
+
+
+
 input_dim = data_normalized.shape[1]  # This should be 2
 latent_dim = 3  # Arbitrary latent dimension, can be tuned
 
 input_layer = Input(shape=(input_dim,))
 encoded = Dense(latent_dim, activation='relu')(input_layer)
-decoded = Dense(input_dim)(encoded)  # Linear activation function
+decoded = Dense(input_dim, activation='sigmoid')(encoded)  # Sigmoid activation to ensure output between 0 and 1
 
 autoencoder = Model(input_layer, decoded)
 encoder = Model(input_layer, encoded)
@@ -65,8 +70,14 @@ history = autoencoder.fit(data_normalized, data_normalized, epochs=100, batch_si
 latent_space_samples = np.random.normal(size=(len(data_normalized), latent_dim))
 generated_data_normalized = decoder.predict(latent_space_samples)
 
+# Clip the values to be within the range [0, 1]
+generated_data_normalized = np.clip(generated_data_normalized, 0, 1)
+
 # De-normalize the generated data
 generated_data = scaler.inverse_transform(generated_data_normalized)
+
+# Ensure the generated data is positive
+generated_data = np.maximum(generated_data, 0)
 
 # Check the shape and first few rows of the generated data
 print("Generated data shape:", generated_data.shape)

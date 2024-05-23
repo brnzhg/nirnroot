@@ -16,14 +16,15 @@ class PendingClick:
 
 
 def main(args):
-    input_filename: str = 'raw_mouse_events.csv' #args[0]
-    output_filename: str = pathlib.Path(input_filename).stem + '_cleaned.csv'
+    data_dir: pathlib.Path = pathlib.Path.cwd() / 'tempdata'
+    input_filepath: pathlib.Path = data_dir / 'raw' / 'raw_mouse_events_70Alchs_Focused3.csv'
+    output_filepath: pathlib.Path = data_dir / (input_filepath.stem + '_cleaned.csv')
 
     on_streaks: List[int] = []
     off_streaks: List[int] = []
 
-    with open(input_filename, 'r') as readf:
-        with open(output_filename, 'w', newline='') as writef:
+    with open(input_filepath, 'r') as readf:
+        with open(output_filepath, 'w', newline='') as writef:
             r = csv.reader(readf)
             w = csv.writer(writef)
 
@@ -62,7 +63,7 @@ def main(args):
                 last_event_type = event_type
                 last_event_time = event_time
 
-    print('Done! Wrote to ' + output_filename)
+    print('Done! Wrote to ' + output_filepath.name)
     print('Off streaks: ' + str(off_streaks))
     print('On streaks: ' + str(on_streaks))
 
