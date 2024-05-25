@@ -4,7 +4,7 @@ import numpy as np
 from keras.models import Model
 from keras.layers import Input, Dense, Dropout
 from keras.callbacks import EarlyStopping
-from sklearn.preprocessing import MinMaxScaler, StandardScaler, RobustScaler
+from sklearn.preprocessing import MinMaxScaler, StandardScaler, RobustScaler, QuantileTransformer
 from keras.regularizers import l2
 
 from typing import List
@@ -22,11 +22,11 @@ def build_data(data_dir: pathlib.Path, filenames: List[str]):
 
 # get the data
 input_filenames: List[str] = \
-    ['raw_mouse_events_70Alchs_Focused_cleaned.csv',
-     'raw_mouse_events_70Alchs_Focused2_cleaned.csv',
-     'raw_mouse_events_70Alchs_Focused3_cleaned.csv'
+    ['bz_constant_050124.csv',
+     'bz_constant_052324.csv',
+     'bz_constant_052324_2.csv',
     ]
-output_filename: str = 'learned_events_70Alchs_focused_minmax5.csv'
+output_filename: str = 'bz_quantile_learned.csv'
 
 data_dir: pathlib.Path = pathlib.Path.cwd() / 'tempdata'
 output_filepath: pathlib.Path = data_dir / 'generated' / output_filename
@@ -34,10 +34,15 @@ output_filepath: pathlib.Path = data_dir / 'generated' / output_filename
 data = build_data(data_dir, input_filenames)
 print(data[:5])
 
+
+
 # Normalize the data
-scaler = MinMaxScaler()
+scaler = QuantileTransformer(output_distribution='uniform')
 data_normalized = scaler.fit_transform(data)
 
+# Check the shape and first few rows of the normalized data
+print("Normalized data shape:", data_normalized.shape)
+print("First few rows of normalized data:\n", data_normalized[:5])
 
 
 
@@ -76,8 +81,6 @@ autoencoder.compile(optimizer='adam', loss='mse')
 # Train the autoencoder
 early_stopping = EarlyStopping(monitor='val_loss', patience=10, restore_best_weights=True)
 history = autoencoder.fit(data_normalized, data_normalized, epochs=200, batch_size=32, validation_split=0.2, callbacks=[early_stopping])
-
-
 
 
 

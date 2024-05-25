@@ -20,11 +20,15 @@ def build_data(data_dir: pathlib.Path, filenames: List[str]):
     return np.array(data_list)
 
 # get the data
+#input_filenames: List[str] = \
+    #['raw_mouse_events_70Alchs_Focused_cleaned.csv',
+    # 'raw_mouse_events_70Alchs_Focused2_cleaned.csv',
+    # 'raw_mouse_events_70Alchs_Focused3_cleaned.csv',
+    #]
 input_filenames: List[str] = \
-    ['raw_mouse_events_70Alchs_Focused_cleaned.csv',
-     'raw_mouse_events_70Alchs_Focused2_cleaned.csv',
-     'raw_mouse_events_70Alchs_Focused3_cleaned.csv',
-    'raw_mouse_events_cleaned.csv'
+    ['bz_constant_050124.csv',
+     'bz_constant_052324.csv',
+     'bz_constant_052324_2.csv',
     ]
 output_filename: str = 'my_minmax.csv'
 

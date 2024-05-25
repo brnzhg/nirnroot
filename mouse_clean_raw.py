@@ -17,8 +17,8 @@ class PendingClick:
 
 def main(args):
     data_dir: pathlib.Path = pathlib.Path.cwd() / 'tempdata'
-    input_filepath: pathlib.Path = data_dir / 'raw' / 'raw_mouse_events_70Alchs_Focused3.csv'
-    output_filepath: pathlib.Path = data_dir / (input_filepath.stem + '_cleaned.csv')
+    input_filepath: pathlib.Path = data_dir / 'raw' / 'bz_constant_052324_2.csv'
+    output_filepath: pathlib.Path = data_dir / 'training' / (input_filepath.stem + '.csv')
 
     on_streaks: List[int] = []
     off_streaks: List[int] = []

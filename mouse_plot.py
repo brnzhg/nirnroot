@@ -32,17 +32,21 @@ def plot_binary_stripes(clean_raw_ts, clean_raw_bs, learned_ts, learned_bs):
 def plot_hists(clean_raw_data, learned_data):
     fig, axes = plt.subplots(2, 2)
 
-    n_bins = 20
+    n_bins = 100
 
     axes[0, 0].set_title('Real Down')
-    axes[0, 0].hist(clean_raw_data[:,0])
+    #axes[0, 0].hist(clean_raw_data[:,0], bins=n_bins, range=(0, .4))
+    axes[0, 0].hist(clean_raw_data[:,0], bins=n_bins)
     axes[1, 0].set_title('Gen Down')
-    axes[1, 0].hist(learned_data[:,0])
+    #axes[1, 0].hist(learned_data[:,0], bins=n_bins, range=(0, .4))
+    axes[1, 0].hist(learned_data[:,0], bins=n_bins)
 
     axes[0, 1].set_title('Real Up')
-    axes[0, 1].hist(clean_raw_data[:,1])
+    #axes[0, 1].hist(clean_raw_data[:,1], bins=n_bins, range=(0, .4))
+    axes[0, 1].hist(clean_raw_data[:,1], bins=n_bins)
     axes[1, 1].set_title('Gen Up')
-    axes[1, 1].hist(learned_data[:,1])
+    #axes[1, 1].hist(learned_data[:,1], bins=n_bins, range=(0, .4))
+    axes[1, 1].hist(learned_data[:,1], bins=n_bins)
 
 def df_from_training_files(data_dir: pathlib.Path, fnames: List[str]):
     col_names = ['timestamp', 'down', 'up']
@@ -56,15 +60,23 @@ data_dir: pathlib.Path = pathlib.Path.cwd() / 'tempdata'
 
 #clean_raw_data_df = pd.read_csv(data_dir / 'training' / 'raw_mouse_events_70Alchs_Focused_cleaned.csv', header=None)
 #clean_raw_data_df = clean_raw_data_df.drop(clean_raw_data_df.columns[[0]], axis=1)
+input_filenames1: List[str] = \
+    ['bz_constant_050124.csv',
+     'bz_constant_052324.csv',
+     'bz_constant_052324_2.csv',
+    ]
+
+input_filenames2: List[str] = \
+    ['raw_mouse_events_70Alchs_Focused_cleaned.csv',
+     'raw_mouse_events_70Alchs_Focused2_cleaned.csv',
+     'raw_mouse_events_70Alchs_Focused3_cleaned.csv',
+    ]
+input_filenames = input_filenames2
 clean_raw_data_df = df_from_training_files(
     data_dir,
-    ['raw_mouse_events_70Alchs_Focused_cleaned.csv',
-      'raw_mouse_events_70Alchs_Focused2_cleaned.csv',
-      'raw_mouse_events_70Alchs_Focused3_cleaned.csv',
-    'raw_mouse_events_cleaned.csv'
-    ])
+    input_filenames)
 #learned_data_df = pd.read_csv(data_dir / 'generated' / 'learned_events_70Alchs_Focused_minmax5.csv', header=None)
-learned_data_df = pd.read_csv(data_dir / 'generated' / 'my_minmax.csv', header=None)
+learned_data_df = pd.read_csv(data_dir / 'generated' / '70Alchs_Focused_kde_2lag.csv', header=None)
 
 clean_raw_data = clean_raw_data_df.to_numpy()
 learned_data= learned_data_df.to_numpy()
