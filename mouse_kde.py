@@ -1,6 +1,7 @@
 import numpy as np
 from scipy.optimize import brentq
-from sklearn.neighbors import KernelDensity
+#from sklearn.neighbors import KernelDensity
+from sklearn.preprocessing import RobustScaler, PowerTransformer, MinMaxScaler
 from statsmodels.nonparametric.kernel_density import KDEMultivariateConditional
 
 import pandas as pd
@@ -51,8 +52,8 @@ input_filenames2: List[str] = \
     ]
 input_filenames = input_filenames2
 
-num_lags: int = 2
-num_gen: int = 2000 #input_df.shape[0]
+num_lags: int = 1
+num_gen: int = 500 #input_df.shape[0]
 #-------------------
 
 data_dir: pathlib.Path = pathlib.Path.cwd() / 'tempdata'
@@ -62,8 +63,13 @@ input_df = df_from_training_files(
     data_dir,
     input_filenames)
 
+transformer = PowerTransformer(method='box-cox')
+input_transformed = transformer.fit_transform(input_df.to_numpy())
+#input_transformed = np.log(input_df.to_numpy())
 
-df = df_add_lags(input_df, num_lags)
+input_df_transformed = pd.DataFrame(input_transformed, columns=input_df.columns)
+df = df_add_lags(input_df_transformed, num_lags)
+
 data = df.to_numpy()
 
 print('last obs')
@@ -121,13 +127,15 @@ for i in range(num_gen):
 
     gen_data.append([down_sample, up_sample])
     
+unscaled_gen_data = transformer.inverse_transform(np.array(gen_data))
+#unscaled_gen_data = np.exp(np.array(gen_data))
 
 print('worked?')
-print(gen_data[:5])
+print(unscaled_gen_data[:5])
 
 with open(output_filepath, 'w', newline='') as f:
     writer = csv.writer(f)
-    writer.writerows(gen_data)
+    writer.writerows(unscaled_gen_data)
     #for generated_row in gen_data:
     #    writer.writerow(list(generated_row))
 # ideas - normalize by 70 and denormalize, by random variance and mean
