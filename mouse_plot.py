@@ -71,7 +71,7 @@ input_filenames2: List[str] = \
      'raw_mouse_events_70Alchs_Focused2_cleaned.csv',
      'raw_mouse_events_70Alchs_Focused3_cleaned.csv',
     ]
-input_filenames = input_filenames2
+input_filenames = input_filenames1
 clean_raw_data_df = df_from_training_files(
     data_dir,
     input_filenames)
@@ -86,7 +86,7 @@ print(clean_raw_data[:5])
 print(learned_data[:5])
 
 # sample data to view
-n = 50 #clean_raw_data_bin.shape[0]
+n = 100 #clean_raw_data_bin.shape[0]
 raw_idx_start = np.random.randint(0, clean_raw_data.shape[0] - n)
 learned_idx_start = np.random.randint(0, learned_data.shape[0] - n)
 

@@ -50,10 +50,10 @@ input_filenames2: List[str] = \
      'raw_mouse_events_70Alchs_Focused2_cleaned.csv',
      'raw_mouse_events_70Alchs_Focused3_cleaned.csv',
     ]
-input_filenames = input_filenames2
+input_filenames = input_filenames1
 
-num_lags: int = 1
-num_gen: int = 500 #input_df.shape[0]
+num_lags: int = 2
+num_gen: int = 4000 #input_df.shape[0]
 #-------------------
 
 data_dir: pathlib.Path = pathlib.Path.cwd() / 'tempdata'
