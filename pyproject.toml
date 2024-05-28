@@ -1,0 +1,11 @@
+[project]
+name = "nirnroot"
+version = "2020.0.0"
+requires-python = ">= 3.11"
+dependencies = [
+    "numpy",
+    "matplotlib"
+]
+
+[project.scripts]
+spam-cli = "nirnroot:main"
