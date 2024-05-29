@@ -37,10 +37,11 @@ class Tracker:
         self.is_tracking: bool = False
         self.last_valid_mouse_down_ts: Optional[float] = None
 
-        keyboard.add_hotkey(self.start_stop_hotkey, self.toggle)
+        keyboard.add_hotkey(self.start_stop_hotkey, self.toggle) #TODO take this out of the class
 
         self.mouse_listener = mouse.Listener(on_click=self.on_click)
 
+#TODO all outer layer stuff can access CLI, in CLI layer, addHandler for start, stop
 
 def main(args):
     data_filename: str = args[0] if args else 'raw_mouse_events.csv'

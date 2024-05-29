@@ -1,4 +1,4 @@
-from nirnroot.nirnroot import main
+from nirnroot.nirnroot import cli
 
 if __name__ == '__main__':
-    main()
+    cli()

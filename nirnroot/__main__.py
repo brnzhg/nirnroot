@@ -1,5 +1,5 @@
-from .nirnroot import main
+from .nirnroot import cli
 
-main()
+cli(obj={})
 
 

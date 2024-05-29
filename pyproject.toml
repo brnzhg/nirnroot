@@ -8,4 +8,4 @@ dependencies = [
 ]
 
 [project.scripts]
-spam-cli = "nirnroot:main"
+nirnroot-cli = "nirnroot.nrinroot:cli"
