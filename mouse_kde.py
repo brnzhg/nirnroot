@@ -1,5 +1,5 @@
 import numpy as np
-from scipy.optimize import brentq
+from scipy.optimize import brentq, RootResults
 #from sklearn.neighbors import KernelDensity
 from sklearn.preprocessing import RobustScaler, PowerTransformer, MinMaxScaler
 from statsmodels.nonparametric.kernel_density import KDEMultivariateConditional
@@ -7,7 +7,7 @@ from statsmodels.nonparametric.kernel_density import KDEMultivariateConditional
 import pandas as pd
 import pathlib
 import csv
-from typing import List
+from typing import List, Tuple
 
 # shamelessly taken from
 # https://stackoverflow.com/questions/60223573/conditional-sampling-from-multivariate-kernel-density-estimate-in-python
@@ -53,7 +53,7 @@ input_filenames2: List[str] = \
 input_filenames = input_filenames1
 
 num_lags: int = 2
-num_gen: int = 4000 #input_df.shape[0]
+num_gen: int = 1000 #input_df.shape[0]
 #-------------------
 
 data_dir: pathlib.Path = pathlib.Path.cwd() / 'tempdata'
@@ -80,13 +80,20 @@ def cdf_conditional(kde, x, y_target):
     return kde.cdf(np.array(y_target).reshape((-1,1)), np.array(x).reshape((-1,1)))
 
 # inverse-transform-sampling
-def sample_conditional_single(kde, x):
+def sample_conditional_single(kde, x, min_y, max_y, y_tol):
     # sample conditional on x
     u = np.random.random()
     # 1-d root-finding
     def func(y):
         return cdf_conditional(kde, x, y) - u
-    sample_y = brentq(func, -99999999, 99999999)  # read brentq-docs about these constants
+    #sample_y = brentq(func, min_y, max_y, xtol=y_tol)
+    #TODO what to do if failed?
+
+    try:
+        sample_y = brentq(func, -999, 999, maxiter=5)  # read brentq-docs about these constants
+    except:
+        sample_y = brentq(func, -999, 999)  # read brentq-docs about these constants
+        
                                                 # constants need to be sign-changing for the function
     return sample_y
 
@@ -100,6 +107,10 @@ lag_data = data[:,2:]
 down_indep = lag_data
 up_indep = np.hstack([down_data, lag_data])
 
+down_min = np.min(down_data)
+down_max = np.max(down_data)
+up_min = np.min(up_data)
+up_max = np.max(up_data)
 
 print(f'down indep: {down_indep[-1]}')
 print(f'up indep: {up_indep[-1]}')
@@ -114,12 +125,18 @@ gen_data = []
 last_lags = np.concatenate([data[-1, :2], lag_data[-1, :-2]])
 print(f'last lags seed: {last_lags}')
 
+
+num_failures = 0
 for i in range(num_gen):
-    down_sample = sample_conditional_single(down_ckde, last_lags)
+    down_sample = sample_conditional_single(down_ckde, last_lags, min_y=-1, max_y=100*down_max, y_tol=.01)
+    if down_sample < -1e8:
+        num_failures += 1
 
     down_and_last_lags = np.concatenate([np.array([down_sample]), last_lags])
     
-    up_sample = sample_conditional_single(up_ckde, down_and_last_lags)
+    up_sample = sample_conditional_single(up_ckde, down_and_last_lags, min_y=-1, max_y=100*up_max, y_tol=.01)
+    if up_sample < -1e8:
+        num_failures += 1
 
     # drop last 2 cols of lags
     last_lags = np.concatenate([np.array([down_sample, up_sample]), last_lags[:-2]])
@@ -132,6 +149,7 @@ unscaled_gen_data = transformer.inverse_transform(np.array(gen_data))
 
 print('worked?')
 print(unscaled_gen_data[:5])
+print(num_failures)
 
 with open(output_filepath, 'w', newline='') as f:
     writer = csv.writer(f)

@@ -26,7 +26,7 @@ class TrackerEvent(IntEnum):
    
 raw_data_cols = ['event', 'ts']
 
-
+# TODO RawDataEnv, this is general along with metadata
 class TrackerEnv:
     #raw_data_cols = ['event', 'ts']
 
@@ -46,10 +46,11 @@ class TrackerEnv:
         
 @dataclass_json
 @dataclass
-class TrackerDataSetMetadata:
+class RawDataMetadata:
     user: str
     label: str
     id: str
+    raw_data_type: str
     
 
 # instead of reader, things just load this guy up
@@ -60,7 +61,7 @@ class TrackerDataSet:
         pass
     
     def __init__(self, 
-                 metadata: TrackerDataSetMetadata,
+                 metadata: RawDataMetadata,
                  dataset_path: Path,
                  metadata_path: Path):
         self.metadata = metadata
@@ -113,7 +114,7 @@ def intialize_new_dataset(env: TrackerEnv,
         return (id, None)
     env.dataset_dir(id).mkdir()
 
-    md = TrackerDataSetMetadata(env.user, label, id)
+    md = RawDataMetadata(env.user, label, id)
     md_path: Path = env.dataset_metadata_path(id)
     with open(md_path, 'w') as mf:
         mf.write(md.to_json())
