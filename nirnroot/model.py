@@ -48,6 +48,68 @@ class ModelGenProto(Protocol):
     def reseed(self) -> None:
         ...
 
+
+class BotClickGen:
+
+    def gen_next(self) -> Tuple[float, float]:
+        pass
+
+    def reseed(self) -> None:
+        pass
+
+class ClickerProto(Protocol):
+    
+    def mouse_down(self):
+        pass
+
+    def mouse_up(self):
+        pass
+
+class Bot:
+    click_gen: BotClickGen
+    clicker: ClickerProto
+    event_handler: float
+    
+    _running: bool
+
+    def stop(self):
+        self._running = False
+        # TODO notify event_handler
+
+    def reseed(self):
+        self.click_gen.reseed()
+    
+    def click_loop(self):
+
+        # TODO notify event_handler
+
+        down_dur, up_dur = self.click_gen
+
+        bad_gen_streak: int = 0
+        while self._running:
+            self.clicker.mouse_down()
+            time.sleep(down_dur)
+            self.clicker.mouse_up()
+            click_done_ts:float = time.time()
+            
+            next_down_dur, next_up_dur = self.click_gen.gen_next()
+
+            #TODO idk
+            sleep_time: float = time.time() - click_done_ts
+
+            if sleep_time > 1e-4:
+                time.sleep(sleep_time)
+            elif sleep_time < -5:
+                raise Exception('big delay in generation')
+            else:
+                bad_gen_streak += 1
+
+                if bad_gen_streak > 1:
+                    raise Exception(f'{bad_gen_streak} bad gens consecutive')
+
+        # notify eventhandler
+
+
 # implementation sfor each model specifically
 # this is CLI crap layer, each model logic dont need to know this, dep other way
 # bridges general CLI layer and modelgen layer, it's the most specific
