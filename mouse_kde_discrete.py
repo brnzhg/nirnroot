@@ -22,7 +22,7 @@ class DiscreteCondOneDimHist:
 
         #TODO can optimize
         chosen_dep_bin_idx: int = \
-            np.random.choice(self.arange(len(dep_bin_weights)), 
+            np.random.choice(np.arange(len(dep_bin_weights)), 
                              p=dep_bin_weights)
         
         return np.random.uniform(low=self.dep_bin_edges[chosen_dep_bin_idx], 
@@ -44,7 +44,7 @@ class DiscreteCondOneDimHist:
 
         percentiles = np.linspace(0, 100, bin_count+1)
         # bin_count + 1 edges
-        bin_edges = np.percentile(indep_col, percentiles, right=True)
+        bin_edges = np.percentile(indep_col, percentiles)
         dig = np.digitize(indep_col, bin_edges, right=True) - 1
         dig[dig == bin_count] = bin_count - 1
 
@@ -58,7 +58,7 @@ class DiscreteCondOneDimHist:
             bin_edges, dig = self._make_1d_indep_buckets(i)
 
             indep_bin_edges.append(bin_edges)
-            digs.append(dig)
+            digs.append(dig.reshape(-1,1))
 
         # append digs as column vectors to make digitized data
         indep_dig_data = np.concatenate(digs, axis=1)
@@ -72,7 +72,7 @@ class DiscreteCondOneDimHist:
         hist_shape = tuple(hist_l)
         hist = np.zeros(hist_shape)
 
-        for idxs in itertools.product((range(bncnt) for bncnt in self.indep_bins_counts)):
+        for idxs in itertools.product(*(range(bncnt) for bncnt in self.indep_bins_counts)):
             #TODO could optimize probably, idk if reshape is needed
             curr_indep = np.array(list(idxs))
             cdf_at_edges = np.array([self.ckde.cdf(np.array(y).reshape(-1,1), 
@@ -141,7 +141,7 @@ def df_add_lags(df, num_lags: int):
 
 
 
-output_filename: str = 'bz_constant_kde_1lag.csv'
+output_filename: str = '70Alchs_Focusd_kde_1lag.csv'
 
 input_filenames1: List[str] = \
     ['bz_constant_050124.csv',
@@ -154,10 +154,10 @@ input_filenames2: List[str] = \
      'raw_mouse_events_70Alchs_Focused2_cleaned.csv',
      'raw_mouse_events_70Alchs_Focused3_cleaned.csv',
     ]
-input_filenames = input_filenames1
+input_filenames = input_filenames2
 
 num_lags: int = 1
-num_gen: int = 10 #input_df.shape[0]
+num_gen: int = 1000 #input_df.shape[0]
 #-------------------
 
 # Data Transformed
@@ -184,6 +184,7 @@ print(data_with_lags[-5:,:])
 # data has is numpy array with lags
 #----------------------------------
 # prepping model 
+data = data_with_lags[:,:2] #TODO dumb but we need to exclude the lags
 down_data = data[:,0].reshape(-1,1)
 up_data = data[:,1].reshape(-1,1)
 lag_data = data_with_lags[:,2:]
@@ -211,16 +212,16 @@ transformed_min = (np.min(data[:,0]), np.min(data[:,1]))
 down_hist = DiscreteCondOneDimHist(down_data,
                                    down_indep, 
                                    dep_bins_count=200,
-                                   indep_bins_counts=(10, 10),
-                                   sample_min=sample_min,
-                                   sample_max=sample_max)
+                                   indep_bins_counts=(4, 4),
+                                   sample_min=sample_min[0],
+                                   sample_max=sample_max[0])
 
 up_hist = DiscreteCondOneDimHist(up_data,
                                  up_indep,
                                  dep_bins_count=200,
-                                 indep_bins_counts=(10, 10, 10),
-                                 sample_min=sample_min,
-                                 sample_max=sample_max)
+                                 indep_bins_counts=(4, 4, 10),
+                                 sample_min=sample_min[1],
+                                 sample_max=sample_max[1])
 
 
 gen_data = []
@@ -244,7 +245,11 @@ for i in range(num_gen):
     last_lags = np.concatenate([sample, last_lags[:-2]])
 
 
-unscaled_gen_data = transformer.invert(np.array(gen_data))
+unscaled_gen_data = transformer.inverse_transform(np.array(gen_data))
 
 print('worked?')
 print(unscaled_gen_data[:5])
+
+with open(output_filepath, 'w', newline='') as f:
+    writer = csv.writer(f)
+    writer.writerows(unscaled_gen_data)
