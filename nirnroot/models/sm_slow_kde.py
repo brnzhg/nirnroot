@@ -1,126 +1,17 @@
 
-import sys
-import time
-import datetime
-import csv
-
-from pathlib import Path
-
 import random
-from enum import Enum, IntEnum
-from dataclasses import dataclass
-from dataclasses_json import dataclass_json
 
 from typing import List, Optional, Tuple, Protocol, Any
 
-#from _typeshed import SupportsWrite
-#import shutil
-
-#--------------
 import numpy as np
+from numpy.typing import NDArray
 from scipy.optimize import brentq, RootResults
-#from sklearn.neighbors import KernelDensity
 from sklearn.preprocessing import RobustScaler, PowerTransformer, MinMaxScaler
 from statsmodels.nonparametric.kernel_density import KDEMultivariateConditional
-#----------
+
+from model import ModelGenProto
 
 
-
-@dataclass_json
-@dataclass
-class ModelMetadata:
-    id: str
-    name: str
-    model_type: str
-    training_id: str
-    
-
-class ModelGenProto(Protocol):
-
-    # single pair
-    def gen_next(self) -> np.ndarray[Any]:
-        ...
-
-    # n pairs in 2d array
-    def gen_next_n(self, n: int) -> np.ndarray[Any]:
-        ...
-
-    def reseed(self) -> None:
-        ...
-
-
-class BotClickGen:
-
-    def gen_next(self) -> Tuple[float, float]:
-        pass
-
-    def reseed(self) -> None:
-        pass
-
-class ClickerProto(Protocol):
-    
-    def mouse_down(self):
-        pass
-
-    def mouse_up(self):
-        pass
-
-class Bot:
-    click_gen: BotClickGen
-    clicker: ClickerProto
-    event_handler: float
-    
-    _running: bool
-
-    def stop(self):
-        self._running = False
-        # TODO notify event_handler
-
-    def reseed(self):
-        self.click_gen.reseed()
-    
-    def click_loop(self):
-
-        # TODO notify event_handler
-
-        down_dur, up_dur = self.click_gen
-
-        bad_gen_streak: int = 0
-        while self._running:
-            self.clicker.mouse_down()
-            time.sleep(down_dur)
-            self.clicker.mouse_up()
-            click_done_ts:float = time.time()
-            
-            next_down_dur, next_up_dur = self.click_gen.gen_next()
-
-            #TODO idk
-            sleep_time: float = time.time() - click_done_ts
-
-            if sleep_time > 1e-4:
-                time.sleep(sleep_time)
-            elif sleep_time < -5:
-                raise Exception('big delay in generation')
-            else:
-                bad_gen_streak += 1
-
-                if bad_gen_streak > 1:
-                    raise Exception(f'{bad_gen_streak} bad gens consecutive')
-
-        # notify eventhandler
-
-
-# implementation sfor each model specifically
-# this is CLI crap layer, each model logic dont need to know this, dep other way
-# bridges general CLI layer and modelgen layer, it's the most specific
-class ModelGenLoaderProto(Protocol):
-    model_type: str # tells them what type it can load
-
-    #TODO could take in ModelMetadata or just load itself 
-    def load_model_gen(self, md: ModelMetadata, model_path: Path) -> ModelGenProto:
-        ...
-#------------------------
- 
 # model to pickle 
 class SMSlowCondKde:
     transformer: PowerTransformer
@@ -223,3 +114,4 @@ class SMSlowCondKdeGen(ModelGenProto):
         self._last_lags = self.get_last_lags_from_idx(self._seed_idx)
 
     
+
