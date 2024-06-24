@@ -15,7 +15,7 @@ class PendingClick:
 
 
 
-def main(args):
+def main(args) -> None:
     data_dir: pathlib.Path = pathlib.Path.cwd() / 'tempdata'
     input_filepath: pathlib.Path = data_dir / 'raw' / 'bz_constant_052324_2.csv'
     output_filepath: pathlib.Path = data_dir / 'training' / (input_filepath.stem + '.csv')

@@ -9,6 +9,9 @@ import pathlib
 import csv
 from typing import List, Tuple
 
+from dataclasses import dataclass
+
+
 
 
 class DiscreteCondOneDimHist:

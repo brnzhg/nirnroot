@@ -52,11 +52,20 @@ class RawDataMetadata:
     id: str
     raw_data_type: str
     
+class TrackerDataWriter(Protocol):
+    def write_event(self, e: TrackerEvent, timestamp: float) -> None:
+        ...
+
+
+# TODO this is for printing to screen
+class TrackerEventHandler(Protocol):
+    def on_pause_resume_event(self, is_pause: bool, ts: float) -> None:
+        ...
 
 # instead of reader, things just load this guy up
 class TrackerDataSet:
 
-    def load_pd() -> None:
+    def load_pd(self) -> None:
         # TODO raw_data_cols
         pass
     
@@ -69,15 +78,6 @@ class TrackerDataSet:
         self.metadata_Path: Path = metadata_path
 
 
-class TrackerDataWriter(Protocol):
-    def write_event(self, e: TrackerEvent, timestamp: float) -> None:
-        ...
-
-
-# TODO this is for printing to screen
-class TrackerEventHandler(Protocol):
-    def on_pause_resume_event(is_pause: bool, ts: float) -> None:
-        ...
     
 
 class TrackerCsvWriter:
@@ -100,27 +100,31 @@ class TrackerCsvWriter:
         self.f = open(write_filepath, 'w', newline='')
         self.csv_writer = csv.writer(self.f)
 
-def _make_datset_id(user: str, label: str):
-    return datetime.datetime.now.strftime("%Y%m%d-%H%M%S") + '_' + user + '_' + label
+def _make_datset_id(user: str, label: str) -> str:
+    return datetime.datetime.now().strftime("%Y%m%d-%H%M%S") + '_' + user + '_' + label
 
 # return Id, dataset if it could create
 def intialize_new_dataset(env: TrackerEnv,
                           #user: str,
                           label: str,
                           id: Optional[str] = None) -> Tuple[str, Optional[TrackerDataSet]]:
-    if not id:
-        id = _make_datset_id(env.user, label)
-    if env.dataset_dir(id).exists(): # dataset already exists
-        return (id, None)
-    env.dataset_dir(id).mkdir()
+    id2: str = id or _make_datset_id(env.user, label)
+    if env.dataset_dir(id2).exists(): # dataset already exists
+        return (id2, None)
+    env.dataset_dir(id2).mkdir()
 
-    md = RawDataMetadata(env.user, label, id)
+    md = RawDataMetadata(env.user, label, id2, "clicks")
+    md_path: Path = env.dataset_metadata_path(id2)
+    with open(md_path, 'r') as mf:
+        mf.write(md.to_json()) #type: ignore
+
+    return (id2, TrackerDataSet(md, env.dataset_path(id2), md_path))
+
+#TODO raw data page, reads raw data helper
+def read_raw_metadata(env: TrackerEnv, id: str) -> RawDataMetadata:
     md_path: Path = env.dataset_metadata_path(id)
     with open(md_path, 'w') as mf:
-        mf.write(md.to_json())
-
-    return (id, TrackerDataSet(md, env.dataset_path(id), md_path))
-
+        return RawDataMetadata.from_json(mf.read()) #type: ignore
 
 def open_dataset(env: TrackerEnv, id: str) -> TrackerDataSet:
     pass
@@ -136,40 +140,44 @@ def dataset_csv_writer(d: TrackerDataSet) -> TrackerCsvWriter:
 
     
     
-
-
 class Tracker:
+
+    is_tracking: bool
+    
     def add_event_handler(self, handler: TrackerEventHandler):
         self.event_handlers.append(handler)
 
     def add_writer(self, writer: TrackerDataWriter):
         self.writers.append(writer)
 
-
-    def write_row(self, row: List[str]):
+    #def write_row(self, row: List[str]):
+    def write_event(self, e: TrackerEvent, ts: float):
         for writer in self.writers:
-            writer.writerow(row)
+            writer.write_event(e, ts)
 
     def on_click(self, x, y, button, pressed):
         if not self.is_tracking:
             return
-        self.writerow(['1' if pressed else '0', time.time()])
+        self.write_event(TrackerEvent.MouseDown if pressed else TrackerEvent.MouseUp, 
+                         time.time())
+        #self.writerow(['1' if pressed else '0', time.time()])
 
     def toggle(self):
         ts: float = time.time()
         if self.is_tracking:
             #TODO print(f'Paused tracking, {self.start_stop_hotkey} to resume...')
-            self.writerow(['3', ts])
+            #self.writerow(['3', ts])
+            self.write_event(TrackerEvent.TrackPause)
             self.is_tracking = False
         else:
             #TODO print(f'Resumed tracking, {self.start_stop_hotkey} to pause...')
-            self.writerow(['4', ts])
+            #self.writerow(['4', ts])
+            self.write_event(TrackerEvent.TrackResume)
             self.is_tracking = True
         
         for eh in self.event_handlers:
             eh.on_pause_resume_event((not self.is_tracking), ts)
             
-
     def stop(self):
         self.mouse_listener.stop()
 
@@ -177,14 +185,14 @@ class Tracker:
         self.mouse_listener.start()
         #print(f'{self.start_stop_hotkey} to start.')
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.writers: List[TrackerDataWriter] = []
         self.event_handlers: List[TrackerEventHandler] = []
 
-        self.start_stop_hotkey: str = 'ctrl+shift+a'
-        self.is_tracking: bool = False
+        self.is_tracking = False
         self.last_valid_mouse_down_ts: Optional[float] = None
 
+        #self.start_stop_hotkey: str = 'ctrl+shift+a'
         #keyboard.add_hotkey(self.start_stop_hotkey, self.toggle) #TODO take this out of the class
 
         self.mouse_listener = mouse.Listener(on_click=self.on_click)

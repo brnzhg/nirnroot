@@ -71,12 +71,12 @@ input_filenames2: List[str] = \
      'raw_mouse_events_70Alchs_Focused2_cleaned.csv',
      'raw_mouse_events_70Alchs_Focused3_cleaned.csv',
     ]
-input_filenames = input_filenames2
+input_filenames = input_filenames1
 clean_raw_data_df = df_from_training_files(
     data_dir,
     input_filenames)
-#learned_data_df = pd.read_csv(data_dir / 'generated' / 'learned_events_70Alchs_Focused_minmax5.csv', header=None)
-learned_data_df = pd.read_csv(data_dir / 'generated' / '70Alchs_Focusd_kde_1lag.csv', header=None)
+learned_data_df = pd.read_csv(data_dir / 'generated' / 'constant_smkde_sym2.csv', header=None)
+#learned_data_df = pd.read_csv(data_dir / 'generated' / '70Alchs_Focusd_kde_1lag.csv', header=None)
 
 clean_raw_data = clean_raw_data_df.to_numpy()
 learned_data= learned_data_df.to_numpy()

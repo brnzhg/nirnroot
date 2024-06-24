@@ -36,7 +36,7 @@ def find_nirndir_and_config(config_filepath_override: Optional[Path]) -> str | T
         return fpath if fpath.is_file() else None
 
     #config_filepath: Optional[Path] = config_filepath_override
-    env_dirname: str = os.getenv(NIRN_ENV_VAR)
+    env_dirname: Optional[str] = os.getenv(NIRN_ENV_VAR)
     if env_dirname:
         env_dir: Path = Path(env_dirname)
         env_file = try_get_dir_config_file(env_dir)

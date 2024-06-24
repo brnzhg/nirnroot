@@ -5,6 +5,8 @@ from dataclasses_json import dataclass_json
 
 from typing import List, Optional, Tuple, Protocol, Any
 
+import time
+
 class BotClickGen:
 
     def gen_next(self) -> Tuple[float, float]:
