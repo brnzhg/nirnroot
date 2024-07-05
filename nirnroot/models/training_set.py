@@ -12,6 +12,9 @@ from domain import RawDataMetadata, TrainingSetMetadata, ModelMetadata
 from model import ModelGenProto, ModelGenFactoryProto, ModelTrainerProto
 
 
+# TODO who handles different kinds of training sets? different builders? maybe builder is wrong here or imp of proto
+# abstractingboth place of data, dataset types / structure
+# raw has cleaning, training has assembl
 
 cols = ['timestamp', 'down', 'up']
 #raw_data_cols = ['event', 'ts']
@@ -55,18 +58,12 @@ class ModelSourceProto(Protocol):
         ...
 
     
-
-    # TODO who handles different kinds of training sets? different builders? maybe builder is wrong here or imp of proto
-    # abstractingboth place of data, dataset types / structure
-    # raw has cleaning, training has assembl
-    # how to let diff implemenmtations share assembly and cleaning
-    # default imps
-    
+@dataclass    
 class TrainingSetBuilder:
     training_source: TrainingSourceProto
     raw_source: RawTrackerSourceProto
     
-    def build_training_set(self, id: str) -> pd.kDataFrame:
+    def build_training_set(self, id: str) -> pd.DataFrame:
         tmd = self.training_source.get_metadata(id)
         dfs = (self.raw_source.get_data_df(rid) for rid in tmd.raw_source_ids)
         df = pd.concat(dfs, ignore_index=True)
@@ -76,12 +73,6 @@ class TrainingSetBuilder:
 
 
 
-
-# put in raw place
-def append_raw_sources(tmd: TrainingSetMetadata, raw_source: RawTrackerSourceProto):
-    dfs = (raw_source.get_data_df(rid) for rid in tmd.raw_source_ids)
-    df = pd.concat(dfs, ignore_index=True)
-    return df.drop(df.columns[[0]], axis=1)
 
 
     

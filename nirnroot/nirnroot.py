@@ -63,7 +63,7 @@ def find_nirndir_and_config(config_filepath_override: Optional[Path]) -> str | T
 @click.pass_context
 def cli(ctx: click.Context, config: click.Path):
 
-    args_config_filepath: Optional[Path] = None if not config else Path(config)
+    args_config_filepath: Optional[Path] = None if not config else Path(str(config))
     find_nirndir_and_config_r = find_nirndir_and_config(args_config_filepath)
 
     nirn_dir: Path
@@ -73,11 +73,11 @@ def cli(ctx: click.Context, config: click.Path):
     else:
         nirn_dir, config_filepath = find_nirndir_and_config_r
 
-    config = configparser.ConfigParser()
-    config.read(config_filepath)
+    cp = configparser.ConfigParser()
+    cp.read(config_filepath)
 
     # set context
-    nirn_env: NirnEnv = NirnEnv(APP_NAME, config, nirn_dir)
+    nirn_env: NirnEnv = NirnEnv(APP_NAME, cp, nirn_dir)
     ctx.obj = nirn_env
 
     # set logging
@@ -89,7 +89,7 @@ def cli(ctx: click.Context, config: click.Path):
                         #$filemode='w',
                         handlers=[fh]) #filename='/tmp/myapp.log',
     logger = logging.getLogger()
-    logger.setLevel(config['Logging']['level']) # DEBUG
+    logger.setLevel(cp['Logging']['level']) # DEBUG
 
     logger.debug(f'NirnDir set to {nirn_dir}')
 

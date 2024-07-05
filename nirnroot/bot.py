@@ -41,7 +41,7 @@ class Bot:
     def reseed(self):
         self.click_gen.reseed()
     
-    def click_loop(self):
+    def click_loop(self) -> None:
 
         # TODO notify event_handler
 
